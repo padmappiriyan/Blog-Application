@@ -48,7 +48,7 @@ const Navbar = () => {
             </Link>
           </div>
 
-          {/* Log In Button - Desktop */}
+          
           <div className="hidden md:block">
             <button className="flex items-center gap-2 cursor-pointer bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold px-6 py-3 rounded-lg transition-all duration-300 transform hover:scale-105 hover:shadow-xl"
             onClick={handleLogin}>
@@ -57,7 +57,7 @@ const Navbar = () => {
             </button>
           </div>
 
-          {/* Mobile Menu Button */}
+         
           <div className="md:hidden">
             <button
               onClick={toggleMobileMenu}
