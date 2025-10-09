@@ -25,7 +25,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final AuthenticationManager authenticationManager;
     private final UserDetailsService userDetailsService;
 
-    @Value("${jwt.secret}") // Reads secret key from application.properties (used to sign JWT tokens)
+    @Value("${jwt.secret}") 
     private String secretKey;
 
     // JWT token expiration time (1 day = 86,400,000 milliseconds)
