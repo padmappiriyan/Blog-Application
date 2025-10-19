@@ -1,12 +1,15 @@
 import { useState } from 'react';
 import { MdEmail, MdLock } from 'react-icons/md';
 import { AiFillEye, AiFillEyeInvisible } from 'react-icons/ai';
+import axios from 'axios';
+import { Link, useNavigate } from 'react-router-dom';
 
 const LoginPage = () => {
-     const [email, setEmail] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
+  const navigate = useNavigate();
 
   const validateForm = () => {
     const newErrors = {};
@@ -27,13 +30,25 @@ const LoginPage = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async(e) => {
     e.preventDefault();
     
     if (validateForm()) {
-      console.log('Login submitted:', { email, password });
-      alert('Login successful!');
+      try{
+        console.log(import.meta.env.VITE_API_URL);
+        const response = await axios.post(import.meta.env.VITE_API_URL+'/auth/login',{
+            email,
+            password
+        });
+        console.log("Login response:", response.data);
+         navigate('/');
     }
+    catch(error){
+        console.error("Login error:", error);
+    }
+    }
+    
+
   };
   return (
     <div className="h-full bg-white flex items-center justify-center">
