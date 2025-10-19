@@ -11,61 +11,90 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 @Configuration
 public class SecurityConfig {
 
-      @Bean
-      public JwtAuthenticationFilter jwtAuthenticationFilter(AuthenticationService authenticationService) {
-          return new JwtAuthenticationFilter(authenticationService);
-      }
+    // JWT Filter bean
+    @Bean
+    public JwtAuthenticationFilter jwtAuthenticationFilter(AuthenticationService authenticationService) {
+        return new JwtAuthenticationFilter(authenticationService);
+    }
 
-      @Bean
-      public UserDetailsService userDetailsService(UserRepository  userRepository) {
-          BlogUserDetailsService blogUserDetailsService= new BlogUserDetailsService(userRepository);
-          String email="user@gmail.com";
-          userRepository.findByEmail(email).orElseGet(()->{
-              User newUser=User.builder()
-                      .name("Test User")
-                      .email(email)
-                      .password(passwordEncoder().encode("password"))
-                      .build();
-              return userRepository.save(newUser);
-          });
-          return blogUserDetailsService;
+    // UserDetailsService bean
+    @Bean
+    public UserDetailsService userDetailsService(UserRepository userRepository) {
+        BlogUserDetailsService blogUserDetailsService = new BlogUserDetailsService(userRepository);
+        String email = "user@gmail.com";
 
-      }
+        // Create default user if not exists
+        userRepository.findByEmail(email).orElseGet(() -> {
+            User newUser = User.builder()
+                    .name("User@gmail.com")
+                    .email(email)
+                    .password(passwordEncoder().encode("password"))
+                    .build();
+            return userRepository.save(newUser);
+        });
 
-      @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http,JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
-          http
-                  .authorizeHttpRequests(auth->auth
-                          .requestMatchers(HttpMethod.POST, "/api/v1/auth").permitAll()
-                          .requestMatchers(HttpMethod.GET, "/api/v1/posts").permitAll()
-                          .requestMatchers(HttpMethod.GET, "/api/v1/categories/**").permitAll()
-                          .requestMatchers(HttpMethod.GET, "/api/v1/tags/**").permitAll()
-                          .anyRequest().authenticated()
-                  )
-                  .csrf(csrf->csrf.disable())
-                  .sessionManagement(session->
-                          session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                  ).addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-          return http.build();
-      }
+        return blogUserDetailsService;
+    }
 
-      @Bean
-      public PasswordEncoder passwordEncoder() {
-          return PasswordEncoderFactories.createDelegatingPasswordEncoder();
-      }
+    // Security Filter Chain
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
+        http
+                // Enable CORS using custom configuration
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/posts").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/categories/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/tags/**").permitAll()
+                        .anyRequest().authenticated()
+                )
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
-      @Bean
-      public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
-          return config.getAuthenticationManager();
-      }
+        return http.build();
+    }
+
+    // CORS configuration method
+    private UrlBasedCorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(List.of("http://localhost:5173"));
+        config.setAllowedMethods(List.of("GET","POST","PUT","DELETE","PATCH","OPTIONS"));
+        config.setAllowedHeaders(List.of("Authorization","Content-Type"));
+        config.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config); // Apply to all endpoints
+        return source;
+    }
+
+    // Password encoder bean
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return PasswordEncoderFactories.createDelegatingPasswordEncoder();
+    }
+
+    // AuthenticationManager bean
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
+    }
 }
