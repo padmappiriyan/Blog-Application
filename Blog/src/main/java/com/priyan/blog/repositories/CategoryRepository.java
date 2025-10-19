@@ -14,5 +14,4 @@ public interface CategoryRepository extends JpaRepository<Category, UUID> {
     List<Category> findAllPostCount();
     boolean existsByNameIgnoreCase(String name);
 
-
 }
